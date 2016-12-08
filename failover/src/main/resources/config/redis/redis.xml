@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd  
+	http://www.springframework.org/schema/context  
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<bean name="genericObjectPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+		<property name="maxWaitMillis" value="-1" />
+		<property name="maxTotal" value="1000" />
+		<property name="minIdle" value="8" />
+		<property name="maxIdle" value="100" />
+	</bean>
+
+
+    <bean id="clusterRedisNodes1"   class="org.springframework.data.redis.connection.RedisNode"> 
+            <constructor-arg value="192.168.17.129" />
+           <constructor-arg value="3000" type="int" />
+     </bean>
+     <bean id="clusterRedisNodes2"   class="org.springframework.data.redis.connection.RedisNode"> 
+            <constructor-arg value="192.168.17.129" />
+           <constructor-arg value="2100" type="int" />
+     </bean>
+       <bean id="clusterRedisNodes3"   class="org.springframework.data.redis.connection.RedisNode"> 
+            <constructor-arg value="192.168.17.129" />
+           <constructor-arg value="3100" type="int" />
+     </bean>
+	<bean id="redisClusterConfiguration"
+		class="org.springframework.data.redis.connection.RedisClusterConfiguration">
+		<property name="clusterNodes">
+			<set>
+				<ref bean="clusterRedisNodes1" />
+				<ref bean="clusterRedisNodes2" />
+				<ref bean="clusterRedisNodes3" />
+			</set>
+		</property>
+
+		<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+			<property name="maxToal" value="1000" />
+			<property name="maxIdle" value="1000" />
+			<property name="maxWaitMillis" value="1000" />
+		</bean>
+		<bean id="jedisConnFactory"
+			class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+			p:use-pool="true">
+			<constructor-arg ref="redisClusterConfiguration" />
+			<constructor-arg ref="jedisPoolConfig" />
+		</bean>
+
+		<bean id="jedisCluster" class="com.my.test.cache.redis.JedisClusterFactory">
+			<property name="addressConfig">
+				<value>classpath:config/redis/connect-redis.properties</value>
+			</property>
+			<property name="addressKeyPrefix" value="address" />   <!-- 属性文件里 key的前缀 -->
+
+			<property name="timeout" value="300000" />
+			<property name="maxRedirections" value="6" />
+			<property name="genericObjectPoolConfig" ref="genericObjectPoolConfig" />
+		</bean>
+</beans>  
